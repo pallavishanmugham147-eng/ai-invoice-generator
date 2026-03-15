@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>AI Invoice Generator</title>
+
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <h2>AI Invoice Generator</h2>
+
+      <label>Product Name</label>
+      <input type="text" id="product" placeholder="Enter product" />
+
+      <label>Quantity</label>
+      <input type="number" id="quantity" placeholder="Enter quantity" />
+
+      <button onclick="generate()">Generate Invoice</button>
+
+      <div class="invoice">
+        <h3>Invoice</h3>
+
+        Subtotal (price × quantity): ₹<span id="price"></span><br />
+        GST: <span id="gst"></span>%<br />
+        Discount: <span id="discount"></span>%<br />
+        Total: ₹<span id="total"></span>
+      </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+  </body>
+</html>
