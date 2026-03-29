@@ -3,34 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
     <title>AI Invoice Generator</title>
-
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   </head>
-
   <body>
-    <div class="container">
-      <h2>AI Invoice Generator</h2>
+    <div class="page">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-logo">🧾 Invoice</div>
+        <div class="header-sub">Smart Invoice Generator</div>
+      </div>
 
-      <label>Product Name</label>
-      <input type="text" id="product" placeholder="Enter product" />
+      <!-- Input Card -->
+      <div class="card input-card">
+        <h2 class="card-title">New Invoice</h2>
 
-      <label>Quantity</label>
-      <input type="number" id="quantity" placeholder="Enter quantity" />
+        <div id="items-list">
+          <!-- Item rows injected here -->
+        </div>
 
-      <button onclick="generate()">Generate Invoice</button>
+        <button class="btn-add" onclick="addItemRow()">+ Add Item</button>
 
-      <div class="invoice">
-        <h3>Invoice</h3>
+        <button class="btn-generate" onclick="generateInvoice()">
+          Generate Invoice
+        </button>
+      </div>
 
-        Subtotal (price × quantity): ₹<span id="price"></span><br />
-        GST: <span id="gst"></span>%<br />
-        Discount: <span id="discount"></span>%<br />
-        Total: ₹<span id="total"></span>
+      <!-- Invoice Output -->
+      <div class="card invoice-card" id="invoice-section">
+        <!-- Invoice Meta -->
+        <div class="invoice-meta">
+          <div class="meta-left">
+            <div class="company-name">🧾 Invoice</div>
+            <div class="company-sub">Tax Invoice</div>
+          </div>
+          <div class="meta-right">
+            <div class="meta-row">
+              <span class="meta-label">Customer ID</span
+              ><span class="meta-value" id="out-customer-id"></span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Date</span
+              ><span class="meta-value" id="out-date"></span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Invoice No.</span
+              ><span class="meta-value" id="out-invoice-no"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Items Table -->
+        <div class="table-wrap">
+          <table class="invoice-table">
+            <thead>
+              <tr>
+                <th>🛒</th>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit Price (&#8377;)</th>
+                <th>Subtotal (&#8377;)</th>
+                <th>GST %</th>
+                <th>GST Amt (&#8377;)</th>
+                <th>Discount %</th>
+                <th>Discount Amt (&#8377;)</th>
+                <th>Total (&#8377;)</th>
+              </tr>
+            </thead>
+            <tbody id="invoice-tbody"></tbody>
+            <tfoot>
+              <tr class="summary-row">
+                <td colspan="4" class="summary-label">Subtotal</td>
+                <td id="sum-subtotal" class="summary-val"></td>
+                <td></td>
+                <td id="sum-gst" class="summary-val"></td>
+                <td></td>
+                <td id="sum-discount" class="summary-val"></td>
+                <td id="sum-item-total" class="summary-val"></td>
+              </tr>
+              <tr class="total-row">
+                <td colspan="9" class="total-label">GRAND TOTAL</td>
+                <td id="sum-grand-total" class="total-val"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Summary Box -->
+        <div class="summary-box">
+          <div class="summary-item">
+            <span class="s-label">Subtotal</span>
+            <span class="s-val" id="box-subtotal"></span>
+          </div>
+          <div class="summary-item">
+            <span class="s-label">Total GST</span>
+            <span class="s-val s-gst" id="box-gst"></span>
+          </div>
+          <div class="summary-item">
+            <span class="s-label">Total Discount</span>
+            <span class="s-val s-discount" id="box-discount"></span>
+          </div>
+          <div class="summary-item total-final">
+            <span class="s-label">Grand Total</span>
+            <span class="s-val s-total" id="box-total"></span>
+          </div>
+        </div>
+
+        <div class="invoice-footer">
+          🤝Thank you for your business! 
+        </div>
+
+        <button class="btn-print" onclick="window.print()">
+          &#128438; Print / Save PDF
+        </button>
       </div>
     </div>
 
-    <script src="/static/script.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
   </body>
 </html>
