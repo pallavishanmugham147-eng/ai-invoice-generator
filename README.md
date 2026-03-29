@@ -1,4 +1,4 @@
-# 🧾 AI Invoice Generator
+# 🧾 Smart Invoice Generator
 
 An intelligent full-stack web application that automatically generates invoices for products.
 The system uses a Machine Learning model to predict product price, GST, and discount, and then calculates the final invoice total instantly.
