@@ -3,13 +3,119 @@ let rowCount = 0;
 
 // Fetch available products from server on page load
 window.addEventListener("DOMContentLoaded", () => {
+  loadProducts();
+});
+
+function loadProducts() {
   fetch("/products")
     .then((r) => r.json())
     .then((data) => {
+      if (data.error) {
+        showUploadMessage("⚠️ " + data.error, "warning");
+        productList = [];
+        return;
+      }
       productList = data.products;
-      addItemRow(); // Start with one row
-    });
-});
+      hideUploadMessage();
+      updateCurrentProducts();
+      if (rowCount === 0) addItemRow(); // Start with one row if not already added
+    })
+    .catch(() => showUploadMessage("Failed to fetch products", "error"));
+}
+
+function uploadCSV() {
+  const fileInput = document.getElementById("csv-file-input");
+  const file = fileInput.files[0];
+
+  if (!file) {
+    showUploadMessage("⚠️ Please select a CSV file", "warning");
+    return;
+  }
+
+  if (!file.name.endsWith(".csv")) {
+    showUploadMessage("⚠️ Only CSV files are allowed", "error");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  showUploadMessage("📤 Uploading and retraining model...", "loading");
+
+  fetch("/upload_csv", {
+    method: "POST",
+    body: formData,
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.error) {
+        showUploadMessage("❌ " + data.error, "error");
+        return;
+      }
+      showUploadMessage(
+        "✅ " +
+          data.message +
+          " | " +
+          data.products.length +
+          " products loaded",
+        "success",
+      );
+      productList = data.products;
+      updateCurrentProducts();
+      fileInput.value = "";
+
+      // Refresh item rows with new products
+      const rows = document.querySelectorAll(".item-row");
+      rows.forEach((row) => {
+        const idSuffix = row.id.replace("row-", "");
+        const select = document.getElementById("product-" + idSuffix);
+        const currentValue = select.value;
+
+        // Rebuild options
+        select.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Select product...";
+        placeholder.disabled = true;
+        placeholder.selected = !currentValue;
+        select.appendChild(placeholder);
+
+        productList.forEach((p) => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p.charAt(0).toUpperCase() + p.slice(1);
+          if (p === currentValue) opt.selected = true;
+          select.appendChild(opt);
+        });
+      });
+    })
+    .catch(() => showUploadMessage("❌ Upload failed", "error"));
+}
+
+function updateCurrentProducts() {
+  const container = document.getElementById("current-products");
+  if (productList.length === 0) {
+    container.innerHTML = "<p style='color: #999;'>No products loaded yet</p>";
+    return;
+  }
+
+  const productHtml = productList
+    .map((p) => `<span class="product-badge">${capitalize(p)}</span>`)
+    .join("");
+  container.innerHTML = `<div class="products-list"><strong>Available Products:</strong> ${productHtml}</div>`;
+}
+
+function showUploadMessage(msg, type = "info") {
+  const el = document.getElementById("upload-message");
+  el.textContent = msg;
+  el.className = "upload-message " + type;
+  el.style.display = "block";
+}
+
+function hideUploadMessage() {
+  const el = document.getElementById("upload-message");
+  el.style.display = "none";
+}
 
 function addItemRow() {
   rowCount++;
@@ -20,9 +126,19 @@ function addItemRow() {
   row.className = "item-row";
   row.id = "row-" + id;
 
+  // Product dropdown label
+  const selectLabel = document.createElement("label");
+  selectLabel.htmlFor = "product-" + id;
+  selectLabel.className = "item-label";
+  selectLabel.textContent = "Product:";
+  selectLabel.style.display = "none";
+  row.appendChild(selectLabel);
+
   // Product dropdown
   const select = document.createElement("select");
   select.id = "product-" + id;
+  select.setAttribute("aria-label", "Product selection");
+  select.setAttribute("title", "Select a product from the list");
   const placeholder = document.createElement("option");
   placeholder.value = "";
   placeholder.textContent = "Select product...";
@@ -36,23 +152,57 @@ function addItemRow() {
     select.appendChild(opt);
   });
 
+  // Quantity input label
+  const qtyLabel = document.createElement("label");
+  qtyLabel.htmlFor = "qty-" + id;
+  qtyLabel.className = "item-label";
+  qtyLabel.textContent = "Quantity:";
+  qtyLabel.style.display = "none";
+  row.appendChild(qtyLabel);
+
   // Quantity input
   const qty = document.createElement("input");
   qty.type = "number";
   qty.id = "qty-" + id;
-  qty.placeholder = "Quantity";
+  qty.placeholder = "Qty";
+  qty.title = "Enter quantity (minimum 1)";
+  qty.setAttribute("aria-label", "Quantity for row " + id);
   qty.min = "1";
   qty.value = "1";
+
+  // Discount input label
+  const discLabel = document.createElement("label");
+  discLabel.htmlFor = "discount-" + id;
+  discLabel.className = "item-label";
+  discLabel.textContent = "Discount (%)";
+  discLabel.style.display = "none";
+  row.appendChild(discLabel);
+
+  // Discount input (optional - user can leave empty for default rules)
+  const discount = document.createElement("input");
+  discount.type = "number";
+  discount.id = "discount-" + id;
+  discount.placeholder = "Disc %";
+  discount.title =
+    "Enter discount percentage (0-100). Leave empty to use default rules based on product category.";
+  discount.setAttribute("aria-label", "Discount percentage for row " + id);
+  discount.min = "0";
+  discount.max = "100";
+  discount.step = "0.1";
+  discount.value = "";
 
   // Remove button
   const removeBtn = document.createElement("button");
   removeBtn.className = "btn-remove";
   removeBtn.innerHTML = "&times;";
-  removeBtn.title = "Remove item";
+  removeBtn.type = "button";
+  removeBtn.title = "Remove this item from invoice";
+  removeBtn.setAttribute("aria-label", "Remove item " + id);
   removeBtn.onclick = () => removeRow(id);
 
   row.appendChild(select);
   row.appendChild(qty);
+  row.appendChild(discount);
   row.appendChild(removeBtn);
   container.appendChild(row);
 }
@@ -63,7 +213,7 @@ function removeRow(id) {
 }
 
 function generateInvoice() {
-  // Gather all item rows
+  // Gather all item rows with discount values
   const rows = document.querySelectorAll(".item-row");
   const items = [];
 
@@ -72,17 +222,34 @@ function generateInvoice() {
     const idSuffix = row.id.replace("row-", "");
     const product = document.getElementById("product-" + idSuffix).value;
     const quantity = document.getElementById("qty-" + idSuffix).value;
+    const discountInput = document.getElementById("discount-" + idSuffix).value;
 
     if (!product || !quantity || parseInt(quantity) < 1) {
       valid = false;
       return;
     }
-    items.push({ product, quantity });
+
+    // Convert discount to number or null if empty
+    const discount = discountInput !== "" ? parseFloat(discountInput) : null;
+
+    // Validate discount is between 0-100
+    if (discount !== null && (discount < 0 || discount > 100)) {
+      showError(`Discount for ${product} must be between 0 and 100%`);
+      valid = false;
+      return;
+    }
+
+    items.push({
+      product,
+      quantity,
+      discount: discount, // null means use default rules
+    });
   });
 
   const errEl = document.getElementById("error-msg");
 
   if (!valid || items.length === 0) {
+    if (!valid) return; // Error already shown
     showError("Please fill in all products and quantities.");
     return;
   }

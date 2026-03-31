@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Invoice Generator</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
   </head>
   <body>
     <div class="page">
@@ -12,6 +15,45 @@
       <div class="header">
         <div class="header-logo">🧾 Invoice</div>
         <div class="header-sub">Smart Invoice Generator</div>
+      </div>
+
+      <!-- CSV Upload Card -->
+      <div class="card upload-card">
+        <h2 class="card-title">📤 Upload Product CSV</h2>
+        <p class="upload-hint">
+          CSV requires: product/itemname, price. GST defaults to 18% if not
+          provided. Other columns ignored.
+        </p>
+
+        <div class="upload-container">
+          <label for="csv-file-input" class="file-label"
+            >Choose CSV File:</label
+          >
+          <input
+            type="file"
+            id="csv-file-input"
+            accept=".csv"
+            title="Upload CSV with product/itemname and price. GST/tax optional (defaults to 18%). Other columns ignored."
+            aria-label="Product CSV file input"
+            required
+          />
+          <button
+            class="btn-upload"
+            onclick="uploadCSV()"
+            title="Upload and retrain the model with new product data"
+            aria-label="Upload CSV file and retrain model"
+          >
+            Upload & Retrain
+          </button>
+        </div>
+
+        <div
+          id="upload-message"
+          class="upload-message"
+          role="alert"
+          aria-live="polite"
+        ></div>
+        <div id="current-products" class="current-products"></div>
       </div>
 
       <!-- Input Card -->
@@ -22,9 +64,21 @@
           <!-- Item rows injected here -->
         </div>
 
-        <button class="btn-add" onclick="addItemRow()">+ Add Item</button>
+        <button
+          class="btn-add"
+          onclick="addItemRow()"
+          title="Add a new item row to the invoice"
+          aria-label="Add Item"
+        >
+          + Add Item
+        </button>
 
-        <button class="btn-generate" onclick="generateInvoice()">
+        <button
+          class="btn-generate"
+          onclick="generateInvoice()"
+          title="Generate invoice with selected items"
+          aria-label="Generate Invoice"
+        >
           Generate Invoice
         </button>
       </div>
@@ -111,9 +165,7 @@
           </div>
         </div>
 
-        <div class="invoice-footer">
-          🤝Thank you for your business! 
-        </div>
+        <div class="invoice-footer">🤝Thank you for your business!</div>
 
         <button class="btn-print" onclick="window.print()">
           &#128438; Print / Save PDF
