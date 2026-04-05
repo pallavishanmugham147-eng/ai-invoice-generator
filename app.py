@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 import pickle
 import uuid
 from datetime import datetime
@@ -7,7 +7,9 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor
 from werkzeug.utils import secure_filename
+import json
 
 app = Flask(__name__)
 
@@ -23,6 +25,9 @@ app.config["MAX_CONTENT_LENGTH"] = (
 
 # ✅ Allowed file extensions
 ALLOWED_EXTENSIONS = {"csv"}
+
+# ✅ Invoices storage file
+INVOICES_EXCEL = os.path.join(BASE_DIR, "invoices.xlsx")
 
 # ✅ Global variables for dynamic data
 current_data = None
@@ -333,6 +338,38 @@ def home():
     return render_template("index.html")
 
 
+@app.route("/invoices")
+def view_invoices():
+    invoices_list = []
+    if os.path.exists(INVOICES_EXCEL):
+        try:
+            df = pd.read_excel(INVOICES_EXCEL)
+            for _, row in df.iterrows():
+                invoices_list.append({
+                    "invoice_no": row.get("Invoice No", ""),
+                    "date": row.get("Date", ""),
+                    "customer_name": row.get("Customer Name", ""),
+                    "customer_phone": row.get("Customer Phone", ""),
+                    "items_count": int(row.get("Total Items", 0)) if pd.notnull(row.get("Total Items")) else 0,
+                    "summary": {
+                        "grand_total": row.get("Grand Total", 0)
+                    }
+                })
+        except Exception as e:
+            print("Excel read error:", e)
+            pass
+    # reverse the list so latest comes first
+    invoices_list.reverse()
+    return render_template("invoices.html", invoices=invoices_list)
+
+
+@app.route("/download_excel")
+def download_excel():
+    if os.path.exists(INVOICES_EXCEL):
+        return send_file(INVOICES_EXCEL, as_attachment=True, download_name="invoices_history.xlsx")
+    return jsonify({"error": "No data found yet."}), 404
+
+
 @app.route("/products", methods=["GET"])
 def get_products():
     global encoder
@@ -430,6 +467,8 @@ def predict():
 
     data = request.json
     items = data.get("items", [])
+    customer_name = data.get("customer_name", "N/A")
+    customer_phone = data.get("customer_phone", "N/A")
 
     if not items:
         return jsonify({"error": "No items provided"}), 400
@@ -517,19 +556,48 @@ def predict():
 
     grand_total = grand_subtotal + grand_gst_amount - grand_discount_amount
 
-    return jsonify(
-        {
-            "customer_id": "CUST-" + str(uuid.uuid4())[:8].upper(),
-            "date": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-            "items": result_items,
-            "summary": {
-                "subtotal": round(grand_subtotal, 2),
-                "total_gst": round(grand_gst_amount, 2),
-                "total_discount": round(grand_discount_amount, 2),
-                "grand_total": round(grand_total, 2),
-            },
-        }
-    )
+    # Build response data
+    invoice_data = {
+        "invoice_no": "INV-" + str(uuid.uuid4())[:8].upper(),
+        "customer_id": "CUST-" + str(uuid.uuid4())[:8].upper(),
+        "customer_name": customer_name,
+        "customer_phone": customer_phone,
+        "date": datetime.now().strftime("%d %b %Y, %I:%M %p"),
+        "items": result_items,
+        "summary": {
+            "subtotal": round(grand_subtotal, 2),
+            "total_gst": round(grand_gst_amount, 2),
+            "total_discount": round(grand_discount_amount, 2),
+            "grand_total": round(grand_total, 2),
+        },
+    }
+
+    # Store the data in Excel
+    try:
+        new_row_df = pd.DataFrame([{
+            "Invoice No": invoice_data["invoice_no"],
+            "Date": invoice_data["date"],
+            "Customer ID": invoice_data["customer_id"],
+            "Customer Name": invoice_data["customer_name"],
+            "Customer Phone": invoice_data["customer_phone"],
+            "Total Items": len(invoice_data["items"]),
+            "Subtotal": invoice_data["summary"]["subtotal"],
+            "Total GST": invoice_data["summary"]["total_gst"],
+            "Total Discount": invoice_data["summary"]["total_discount"],
+            "Grand Total": invoice_data["summary"]["grand_total"]
+        }])
+
+        if os.path.exists(INVOICES_EXCEL):
+            existing_df = pd.read_excel(INVOICES_EXCEL)
+            updated_df = pd.concat([existing_df, new_row_df], ignore_index=True)
+        else:
+            updated_df = new_row_df
+            
+        updated_df.to_excel(INVOICES_EXCEL, index=False)
+    except Exception as e:
+        print(f"Error saving invoice to {INVOICES_EXCEL}: {e}")
+
+    return jsonify(invoice_data)
 
 
 if __name__ == "__main__":

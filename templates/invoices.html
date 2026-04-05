@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Invoice Generator - View Invoices</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Header -->
+      <div class="header">
+        <div class="header-logo">🧾 Invoice</div>
+        <div class="header-sub">Invoice History</div>
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
+           <a href="/" class="nav-link">← Back to Create Invoice</a>
+           <a href="/download_excel" class="nav-link" title="Download all data as Excel">Download Excel ⬇</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Generated Invoices</h2>
+        {% if invoices %}
+          <div class="invoices-grid">
+          {% for inv in invoices %}
+            <div class="invoice-history-item">
+               <div class="inv-head">
+                 <strong>{{ inv.invoice_no }}</strong>
+                 <span class="inv-date">{{ inv.date }}</span>
+               </div>
+               <div class="inv-body">
+                 <p><strong>Customer:</strong> {{ inv.customer_name }} ({{ inv.customer_phone }})</p>
+                 <p><strong>Items:</strong> {{ inv.items_count }} items</p>
+                 <h3 class="inv-total">₹{{ "%.2f"|format(inv.summary.grand_total) }}</h3>
+               </div>
+            </div>
+          {% endfor %}
+          </div>
+        {% else %}
+          <p style="color: #6b7280; text-align: center; font-style: italic;">No invoices have been generated yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+[
+    {
+        "invoice_no": "INV-AF0E1BAB",
+        "customer_id": "CUST-D2FA1A22",
+        "customer_name": "Aadhi",
+        "customer_phone": "8960012345",
+        "date": "05 Apr 2026, 12:25 PM",
+        "items": [
+            {
+                "product": "Fashion accessories",
+                "quantity": 3,
+                "unit_price": 48.66,
+                "subtotal": 145.97,
+                "gst_pct": 14.56,
+                "gst_amount": 21.25,
+                "discount_pct": 0,
+                "discount_amount": 0.0,
+                "item_total": 167.22
+            }
+        ],
+        "summary": {
+            "subtotal": 145.97,
+            "total_gst": 21.25,
+            "total_discount": 0.0,
+            "grand_total": 167.22
+        }
+    },
+    {
+        "invoice_no": "INV-EC08714C",
+        "customer_id": "CUST-61EE48E6",
+        "customer_name": "Eva",
+        "customer_phone": "1234567894",
+        "date": "05 Apr 2026, 12:49 PM",
+        "items": [
+            {
+                "product": "Drone Mini",
+                "quantity": 1,
+                "unit_price": 172.19,
+                "subtotal": 172.19,
+                "gst_pct": 29.09,
+                "gst_amount": 50.09,
+                "discount_pct": 0,
+                "discount_amount": 0.0,
+                "item_total": 222.28
+            },
+            {
+                "product": "Vacuum Cleaner",
+                "quantity": 1,
+                "unit_price": 348.54,
+                "subtotal": 348.54,
+                "gst_pct": 92.61,
+                "gst_amount": 322.77,
+                "discount_pct": 0,
+                "discount_amount": 0.0,
+                "item_total": 671.31
+            },
+            {
+                "product": "Water Bottle",
+                "quantity": 1,
+                "unit_price": 344.25,
+                "subtotal": 344.25,
+                "gst_pct": 91.55,
+                "gst_amount": 315.17,
+                "discount_pct": 0,
+                "discount_amount": 0.0,
+                "item_total": 659.43
+            },
+            {
+                "product": "Winter Jacket",
+                "quantity": 1,
+                "unit_price": 338.16,
+                "subtotal": 338.16,
+                "gst_pct": 90.85,
+                "gst_amount": 307.23,
+                "discount_pct": 20,
+                "discount_amount": 67.63,
+                "item_total": 577.76
+            },
+            {
+                "product": "Smartphone Case",
+                "quantity": 1,
+                "unit_price": 460.45,
+                "subtotal": 460.45,
+                "gst_pct": 138.19,
+                "gst_amount": 636.31,
+                "discount_pct": 15,
+                "discount_amount": 69.07,
+                "item_total": 1027.69
+            }
+        ],
+        "summary": {
+            "subtotal": 1663.59,
+            "total_gst": 1631.57,
+            "total_discount": 136.7,
+            "grand_total": 3158.46
+        }
+    }
+]

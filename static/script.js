@@ -100,7 +100,7 @@ function updateCurrentProducts() {
   }
 
   const productHtml = productList
-    .map((p) => `<span class="product-badge">${capitalize(p)}</span>`)
+    .map((p) => `<span class="product-badge" draggable="true" ondragstart="handleBadgeDragStart(event, '${p}')">${capitalize(p)}</span>`)
     .join("");
   container.innerHTML = `<div class="products-list"><strong>Available Products:</strong> ${productHtml}</div>`;
 }
@@ -125,6 +125,14 @@ function addItemRow() {
   const row = document.createElement("div");
   row.className = "item-row";
   row.id = "row-" + id;
+  row.draggable = true;
+
+  // Drag handle
+  const dragHandle = document.createElement("span");
+  dragHandle.className = "drag-handle";
+  dragHandle.innerHTML = "☰";
+  dragHandle.title = "Drag to reorder";
+  row.appendChild(dragHandle);
 
   // Product dropdown label
   const selectLabel = document.createElement("label");
@@ -213,6 +221,9 @@ function removeRow(id) {
 }
 
 function generateInvoice() {
+  const customerName = document.getElementById("customer-name").value.trim();
+  const customerPhone = document.getElementById("customer-phone").value.trim();
+
   // Gather all item rows with discount values
   const rows = document.querySelectorAll(".item-row");
   const items = [];
@@ -248,6 +259,11 @@ function generateInvoice() {
 
   const errEl = document.getElementById("error-msg");
 
+  if (!customerName || !customerPhone) {
+    showError("Please enter Customer Name and Phone Number.");
+    return;
+  }
+
   if (!valid || items.length === 0) {
     if (!valid) return; // Error already shown
     showError("Please fill in all products and quantities.");
@@ -259,7 +275,7 @@ function generateInvoice() {
   fetch("/predict", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ items }),
+    body: JSON.stringify({ items, customer_name: customerName, customer_phone: customerPhone }),
   })
     .then((r) => r.json())
     .then((data) => {
@@ -275,9 +291,10 @@ function generateInvoice() {
 function renderInvoice(data) {
   // Meta info
   document.getElementById("out-customer-id").textContent = data.customer_id;
+  document.getElementById("out-customer-name").textContent = data.customer_name;
+  document.getElementById("out-customer-phone").textContent = data.customer_phone;
   document.getElementById("out-date").textContent = data.date;
-  document.getElementById("out-invoice-no").textContent =
-    "INV-" + Math.floor(Math.random() * 90000 + 10000);
+  document.getElementById("out-invoice-no").textContent = data.invoice_no;
 
   // Table body
   const tbody = document.getElementById("invoice-tbody");
@@ -350,4 +367,129 @@ function showError(msg) {
 function hideError() {
   const el = document.getElementById("error-msg");
   if (el) el.style.display = "none";
+}
+
+// --- Drag and Drop Item Reordering ---
+let draggedRow = null;
+
+document.getElementById('items-list').addEventListener('dragstart', function(e) {
+  const row = e.target.closest('.item-row');
+  if (row) {
+    draggedRow = row;
+    row.style.opacity = '0.5';
+  }
+});
+
+document.getElementById('items-list').addEventListener('dragover', function(e) {
+  e.preventDefault();
+  const targetRow = e.target.closest('.item-row');
+  if (targetRow && targetRow !== draggedRow && draggedRow) {
+    const list = document.getElementById('items-list');
+    const rows = Array.from(list.querySelectorAll('.item-row'));
+    const draggedIndex = rows.indexOf(draggedRow);
+    const targetIndex = rows.indexOf(targetRow);
+    
+    if (draggedIndex < targetIndex) {
+      targetRow.after(draggedRow);
+    } else {
+      targetRow.before(draggedRow);
+    }
+  }
+});
+
+document.getElementById('items-list').addEventListener('dragend', function(e) {
+  const row = e.target.closest('.item-row');
+  if (row) {
+    row.style.opacity = '1';
+  }
+  draggedRow = null;
+});
+
+// --- File Drag and Drop ---
+const dropzone = document.getElementById('csv-dropzone');
+if (dropzone) {
+  const customFileInput = document.getElementById('csv-file-input');
+
+  dropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropzone.classList.add('drag-over');
+  });
+
+  dropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('drag-over');
+    
+    if (e.dataTransfer.files.length) {
+      customFileInput.files = e.dataTransfer.files;
+      uploadCSV();
+    }
+  });
+}
+
+// --- Product Badge Drag and Drop ---
+let draggedProduct = null;
+window.handleBadgeDragStart = function(e, product) {
+  draggedProduct = product;
+  e.dataTransfer.setData("text/plain", product);
+  
+  const instruction = document.getElementById("drop-instruction");
+  if(instruction) instruction.style.display = "block";
+};
+
+document.addEventListener("dragend", function(e) {
+  if (e.target.classList.contains("product-badge")) {
+    const instruction = document.getElementById("drop-instruction");
+    if(instruction) instruction.style.display = "none";
+    draggedProduct = null;
+  }
+});
+
+const inputCardDropzone = document.querySelector(".input-card");
+if (inputCardDropzone) {
+  inputCardDropzone.addEventListener("dragover", (e) => {
+    if (draggedProduct) {
+      e.preventDefault();
+      const instruction = document.getElementById("drop-instruction");
+      if (instruction) instruction.style.background = "#dbeafe";
+    }
+  });
+
+  inputCardDropzone.addEventListener("dragleave", (e) => {
+    if (draggedProduct) {
+      const instruction = document.getElementById("drop-instruction");
+      if (instruction) instruction.style.background = "#eff6ff";
+    }
+  });
+
+  inputCardDropzone.addEventListener("drop", (e) => {
+    if (draggedProduct) {
+      e.preventDefault();
+      
+      // Add the row
+      addItemRow();
+      
+      // Set the value (rowCount is global and was just incremented)
+      const select = document.getElementById("product-" + rowCount);
+      if (select) {
+        select.value = draggedProduct;
+      }
+      
+      // Visual feedback
+      const newRow = document.getElementById("row-" + rowCount);
+      if (newRow) {
+        newRow.style.background = "#dcfce7";
+        newRow.style.transition = "background 0.3s ease";
+        setTimeout(() => { newRow.style.background = ""; }, 800);
+      }
+      
+      const instruction = document.getElementById("drop-instruction");
+      if(instruction) instruction.style.display = "none";
+      draggedProduct = null;
+    }
+  });
 }

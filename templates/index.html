@@ -15,10 +15,14 @@
       <div class="header">
         <div class="header-logo">🧾 Invoice</div>
         <div class="header-sub">Smart Invoice Generator</div>
+        <div style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
+           <a href="/invoices" class="nav-link">View Invoices →</a>
+           <a href="/download_excel" class="nav-link" title="Download all data as Excel">Download Excel ⬇</a>
+        </div>
       </div>
 
       <!-- CSV Upload Card -->
-      <div class="card upload-card">
+      <div class="card upload-card" id="csv-dropzone">
         <h2 class="card-title">📤 Upload Product CSV</h2>
         <p class="upload-hint">
           CSV requires: product/itemname, price. GST defaults to 18% if not
@@ -60,6 +64,24 @@
       <div class="card input-card">
         <h2 class="card-title">New Invoice</h2>
 
+        <!-- Customer Details -->
+        <div class="customer-details">
+          <div class="input-group">
+            <label for="customer-name" class="item-label">Customer Name</label>
+            <input type="text" id="customer-name" placeholder="Customer Name" required aria-label="Customer Name" />
+          </div>
+          <div class="input-group">
+            <label for="customer-phone" class="item-label">Phone Number</label>
+            <input type="tel" id="customer-phone" placeholder="Phone Number" required aria-label="Phone Number" />
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="drop-instruction" id="drop-instruction" style="text-align:center; padding: 10px; background:#eff6ff; color:#3b82f6; border:1.5px dashed #bfdbfe; border-radius:8px; margin-bottom:10px; display:none; pointer-events:none;">
+           Drop product anywhere here to automatically add an item row!
+        </div>
+
         <div id="items-list">
           <!-- Item rows injected here -->
         </div>
@@ -92,6 +114,14 @@
             <div class="company-sub">Tax Invoice</div>
           </div>
           <div class="meta-right">
+            <div class="meta-row">
+              <span class="meta-label">Customer Name</span
+              ><span class="meta-value" id="out-customer-name"></span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Phone</span
+              ><span class="meta-value" id="out-customer-phone"></span>
+            </div>
             <div class="meta-row">
               <span class="meta-label">Customer ID</span
               ><span class="meta-value" id="out-customer-id"></span>
